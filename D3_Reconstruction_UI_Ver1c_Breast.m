@@ -701,7 +701,17 @@ else
 %     caxis([0 1])
     title('Reconstructed amplitude')
 
+function intensity = MSERIntensity(MSERRegion, Amp, ~)
 
+intensity = 0; 
+area = 0;
+for i =1:length(MSERRegion)
+    curPos = MSERRegion{i};
+    intensity = intensity + Amp(curPos(0), curPos(1));
+    area = area + 1;
+
+intensity = intensity / area;
+end
 
 % --- Executes on button press in toggleDetection.
 function toggleDetection_Callback(hObject, eventdata, handles)
@@ -779,8 +789,12 @@ BW2 = imerode(fill,SE);
 % BW2 = imopen(BW2, SE)
 
 
+% IntCell(k_cell,1) = sum(sum(Amp(pos_phase(i,2)-10:pos_phase(i,2)+10,pos_phase(i,1)-10:pos_phase(i,1)+10).*mask))/sum(sum(mask));   % intensity
+
+
 
 imshow(BW2)
+hold on
 axes(handles.axes2)
 
 
@@ -790,81 +804,86 @@ viscircles(pos_phase,radii_phase,'EdgeColor','w');
 % I = imagesc(handles.NormAmp)
 regions_amp = detectMSERFeatures(Amp, ThresholdDelta=4, RegionAreaRange=[7000 9000], MaxAreaVariation=1)
 % % regions_phase = detectMSERFeatures(uint8(handles.NormAmp), ThresholdDelta=0.8, RegionAreaRange=[800 9000], MaxAreaVariation=1)
-[regions_phase, cc] = detectMSERFeatures(BW2, RegionAreaRange=[10000 400000])
-mserStats = regionprops(cc, 'BoundingBox', 'Eccentricity', ...
-    'Solidity', 'Extent', 'Euler', 'Image');
-bboxes = vertcat(mserStats.BoundingBox);
-bboxes
-xmin = bboxes(:,1);
-ymin = bboxes(:,2);
-xmax = xmin + bboxes(:,3) - 1;
-ymax = ymin + bboxes(:,4) - 1;
-
-% Expand the bounding boxes by a small amount.
-expansionAmount = 0.02;
-xmin = (1-expansionAmount) * xmin;
-ymin = (1-expansionAmount) * ymin;
-xmax = (1+expansionAmount) * xmax;
-ymax = (1+expansionAmount) * ymax;
-
-% Clip the bounding boxes to be within the image bounds
-xmin = max(xmin, 1);
-ymin = max(ymin, 1);
-xmax = min(xmax, size(I,2));
-ymax = min(ymax, size(I,1));
-
-% Show the expanded bounding boxes
-expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-IExpandedBBoxes = insertShape(I,'Rectangle',expandedBBoxes,'LineWidth',3);
-
-% figure
-% imshow(IExpandedBBoxes)
-% [B,L] = bwboundaries(I,'noholes');
-% Compute the overlap ratio
-overlapRatio = bboxOverlapRatio(expandedBBoxes, expandedBBoxes);
-
-% Set the overlap ratio between a bounding box and itself to zero to
-% simplify the graph representation.
-n = size(overlapRatio,1); 
-overlapRatio(1:n+1:n^2) = 0;
-
-% Create the graph
-g = graph(overlapRatio);
-
-% Find the connected text regions within the graph
-componentIndices = conncomp(g);
-
-% Merge the boxes based on the minimum and maximum dimensions.
-xmin = accumarray(componentIndices', xmin, [], @min);
-ymin = accumarray(componentIndices', ymin, [], @min);
-xmax = accumarray(componentIndices', xmax, [], @max);
-ymax = accumarray(componentIndices', ymax, [], @max);
-
-% Compose the merged bounding boxes using the [x y width height] format.
-textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
-textBBoxes
-% Remove bounding boxes that only contain one text region
-% numRegionsInGroup = histcounts(componentIndices);
-% textBBoxes(numRegionsInGroup == 1, :) = [];
-
-% Show the final text detection result.
-ITextRegion = insertShape(I, 'Rectangle', textBBoxes,'LineWidth',3);
-
-% figure
-% imshow(ITextRegion)
-
-
-
+[regions_phase, cc] = detectMSERFeatures(BW2, RegionAreaRange=[20000 35000])
+% mserStats = regionprops(cc, 'BoundingBox', 'Eccentricity', ...
+%     'Solidity', 'Extent', 'Euler', 'Image');
+% bboxes = vertcat(mserStats.BoundingBox);
+% bboxes
+% xmin = bboxes(:,1);
+% ymin = bboxes(:,2);
+% xmax = xmin + bboxes(:,3) - 1;
+% ymax = ymin + bboxes(:,4) - 1;
+% 
+% % Expand the bounding boxes by a small amount.
+% expansionAmount = 0.02;
+% xmin = (1-expansionAmount) * xmin;
+% ymin = (1-expansionAmount) * ymin;
+% xmax = (1+expansionAmount) * xmax;
+% ymax = (1+expansionAmount) * ymax;
+% 
+% % Clip the bounding boxes to be within the image bounds
+% xmin = max(xmin, 1);
+% ymin = max(ymin, 1);
+% xmax = min(xmax, size(I,2));
+% ymax = min(ymax, size(I,1));
+% 
+% % Show the expanded bounding boxes
+% expandedBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+% IExpandedBBoxes = insertShape(I,'Rectangle',expandedBBoxes,'LineWidth',3);
+% 
+% % figure
+% % imshow(IExpandedBBoxes)
+% % [B,L] = bwboundaries(I,'noholes');
+% % Compute the overlap ratio
+% overlapRatio = bboxOverlapRatio(expandedBBoxes, expandedBBoxes);
+% 
+% % Set the overlap ratio between a bounding box and itself to zero to
+% % simplify the graph representation.
+% n = size(overlapRatio,1); 
+% overlapRatio(1:n+1:n^2) = 0;
+% 
+% % Create the graph
+% g = graph(overlapRatio);
+% 
+% % Find the connected text regions within the graph
+% componentIndices = conncomp(g);
+% 
+% % Merge the boxes based on the minimum and maximum dimensions.
+% xmin = accumarray(componentIndices', xmin, [], @min);
+% ymin = accumarray(componentIndices', ymin, [], @min);
+% xmax = accumarray(componentIndices', xmax, [], @max);
+% ymax = accumarray(componentIndices', ymax, [], @max);
+% 
+% % Compose the merged bounding boxes using the [x y width height] format.
+% textBBoxes = [xmin ymin xmax-xmin+1 ymax-ymin+1];
+% textBBoxes
+% % Remove bounding boxes that only contain one text region
+% % numRegionsInGroup = histcounts(componentIndices);
+% % textBBoxes(numRegionsInGroup == 1, :) = [];
+% 
+% % Show the final text detection result.
+% ITextRegion = insertShape(I, 'Rectangle', textBBoxes,'LineWidth',3);
+% 
+% % figure
+plot(regions_phase)
+% 
+% 
+% 
+% 
+% 
 % % imagesc(handles.NormAmp)
 % plot(uint8(handles.NormAmp))
-imagesc(BW2)
+% imagesc(BW2)
 % % plot(B)
-hold on
-plot(regions_phase,'showPixelList',true,'showEllipses',false)
+% hold on
+% plot(regions_phase,'showPixelList',true,'showEllipses',false)
 % imshow(bboxes)
 
 % % plot(regions_phase)
 axes(handles.axes2)
+
+intensity = MSERIntensity(regions_phase, Amp, cc);
+intensity 
 
 % {
 %     "delta": 9,
